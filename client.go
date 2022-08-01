@@ -9,6 +9,7 @@ import (
 )
 
 func (ac *AptosClient) makeRequest(method, path string, result interface{}) error {
+	// TODO: check path
 	fullRoute := ac.nodeURL + path
 	req, err := http.NewRequest(method, fullRoute, nil)
 	if err != nil {
@@ -124,4 +125,49 @@ func (ac *AptosClient) AccountModuleByID(address, moduleID, version string) (*Ac
 	}
 
 	return &accountModule, nil
+}
+
+func (ac *AptosClient) GetTransactions(limit, start int) ([]Transaction, error) {
+	path := "/transactions"
+	path += fmt.Sprint("?limit=", limit)
+	path += fmt.Sprint("&start=", start)
+
+	fmt.Println(path)
+
+	var transactions []Transaction
+	err := ac.makeRequest("GET", path, &transactions)
+	if err != nil {
+		return nil, err
+	}
+
+	return transactions, err
+}
+
+func (ac *AptosClient) GetAccountTransactions(address string, limit, start int) ([]Transaction, error) {
+	path := fmt.Sprint("/accounts/", address, "/transactions")
+	path += fmt.Sprint("?limit=", limit)
+	path += fmt.Sprint("&start=", start)
+
+	fmt.Println(path)
+
+	var transactions []Transaction
+	err := ac.makeRequest("GET", path, &transactions)
+	if err != nil {
+		return nil, err
+	}
+
+	return transactions, err
+}
+
+func (ac *AptosClient) GetTransaction(hashOrVersion string) (*Transaction, error) {
+
+	path := fmt.Sprint("/transactions/", hashOrVersion)
+
+	var transaction Transaction
+	err := ac.makeRequest("GET", path, &transaction)
+	if err != nil {
+		return nil, err
+	}
+
+	return &transaction, nil
 }
