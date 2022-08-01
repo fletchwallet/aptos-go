@@ -2,6 +2,7 @@ package aptos
 
 import (
 	"crypto/ed25519"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 
@@ -12,6 +13,17 @@ type AptosAccount struct {
 	privateKey ed25519.PrivateKey
 
 	authKeyCached string
+}
+
+func AccountFromRandomKey() (*AptosAccount, error) {
+	_, private, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AptosAccount{
+		privateKey: private,
+	}, nil
 }
 
 func AccountFromPrivateKey(privateKey string) (*AptosAccount, error) {
@@ -49,4 +61,8 @@ func (aa *AptosAccount) Address() string {
 
 func (aa *AptosAccount) SignMessage(msg []byte) []byte {
 	return ed25519.Sign(aa.privateKey, msg)
+}
+
+func (aa *AptosAccount) VerifyMessage(sig, msg []byte) bool {
+	return ed25519.Verify(aa.pubKeyBytes(), msg, sig)
 }
