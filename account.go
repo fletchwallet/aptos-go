@@ -3,6 +3,7 @@ package aptos
 import (
 	"crypto/ed25519"
 	"encoding/hex"
+	"fmt"
 
 	"golang.org/x/crypto/sha3"
 )
@@ -31,16 +32,16 @@ func (aa *AptosAccount) pubKeyBytes() []byte {
 }
 
 func (aa *AptosAccount) PublicKey() string {
-	return hex.EncodeToString(aa.pubKeyBytes())
+	return fmt.Sprint("0x", hex.EncodeToString(aa.pubKeyBytes()))
 }
 
-func (aa *AptosAccount) AuthKey() string {
+func (aa *AptosAccount) Address() string {
 	if aa.authKeyCached == "" {
 		hasher := sha3.New256()
 
 		hasher.Write(aa.pubKeyBytes())
 		hasher.Write([]byte("\x00"))
-		aa.authKeyCached = hex.EncodeToString(hasher.Sum(nil))
+		aa.authKeyCached = fmt.Sprint("0x", hex.EncodeToString(hasher.Sum(nil)))
 	}
 
 	return aa.authKeyCached

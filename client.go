@@ -1,6 +1,7 @@
 package aptos
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,10 +9,10 @@ import (
 	"net/http"
 )
 
-func (ac *AptosClient) makeRequest(method, path string, result interface{}) error {
+func (ac *AptosClient) makeRequest(method, path string, requestBodyJson []byte, result interface{}) error {
 	// TODO: check path
 	fullRoute := ac.nodeURL + path
-	req, err := http.NewRequest(method, fullRoute, nil)
+	req, err := http.NewRequest(method, fullRoute, bytes.NewBuffer(requestBodyJson))
 	if err != nil {
 		return err
 	}
@@ -44,7 +45,7 @@ func (ac *AptosClient) makeRequest(method, path string, result interface{}) erro
 
 func (ac *AptosClient) LedgerInfo() (*LedgerInfo, error) {
 	var info LedgerInfo
-	err := ac.makeRequest("GET", "/", &info)
+	err := ac.makeRequest("GET", "/", nil, &info)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +55,7 @@ func (ac *AptosClient) LedgerInfo() (*LedgerInfo, error) {
 
 func (ac *AptosClient) Account(address string) (*Account, error) {
 	var account Account
-	err := ac.makeRequest("GET", fmt.Sprint("/accounts/", address), &account)
+	err := ac.makeRequest("GET", fmt.Sprint("/accounts/", address), nil, &account)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +71,7 @@ func (ac *AptosClient) AccountResources(address, version string) ([]AccountResou
 	}
 
 	var accountResources []AccountResource
-	err := ac.makeRequest("GET", path, &accountResources)
+	err := ac.makeRequest("GET", path, nil, &accountResources)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +86,7 @@ func (ac *AptosClient) AccountResourceByType(address, resourceType, version stri
 	}
 
 	var accountResource AccountResource
-	err := ac.makeRequest("GET", path, &accountResource)
+	err := ac.makeRequest("GET", path, nil, &accountResource)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +103,7 @@ func (ac *AptosClient) AccountModules(address, version string) ([]AccountModule,
 	}
 
 	var accountModules []AccountModule
-	err := ac.makeRequest("GET", path, &accountModules)
+	err := ac.makeRequest("GET", path, nil, &accountModules)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +120,7 @@ func (ac *AptosClient) AccountModuleByID(address, moduleID, version string) (*Ac
 	}
 
 	var accountModule AccountModule
-	err := ac.makeRequest("GET", path, &accountModule)
+	err := ac.makeRequest("GET", path, nil, &accountModule)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +128,7 @@ func (ac *AptosClient) AccountModuleByID(address, moduleID, version string) (*Ac
 	return &accountModule, nil
 }
 
-func (ac *AptosClient) GetTransactions(limit, start int) ([]Transaction, error) {
+func (ac *AptosClient) Transactions(limit, start int) ([]Transaction, error) {
 	path := "/transactions"
 	path += fmt.Sprint("?limit=", limit)
 	path += fmt.Sprint("&start=", start)
@@ -135,7 +136,7 @@ func (ac *AptosClient) GetTransactions(limit, start int) ([]Transaction, error) 
 	fmt.Println(path)
 
 	var transactions []Transaction
-	err := ac.makeRequest("GET", path, &transactions)
+	err := ac.makeRequest("GET", path, nil, &transactions)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +144,7 @@ func (ac *AptosClient) GetTransactions(limit, start int) ([]Transaction, error) 
 	return transactions, err
 }
 
-func (ac *AptosClient) GetAccountTransactions(address string, limit, start int) ([]Transaction, error) {
+func (ac *AptosClient) AccountTransactions(address string, limit, start int) ([]Transaction, error) {
 	path := fmt.Sprint("/accounts/", address, "/transactions")
 	path += fmt.Sprint("?limit=", limit)
 	path += fmt.Sprint("&start=", start)
@@ -151,7 +152,7 @@ func (ac *AptosClient) GetAccountTransactions(address string, limit, start int) 
 	fmt.Println(path)
 
 	var transactions []Transaction
-	err := ac.makeRequest("GET", path, &transactions)
+	err := ac.makeRequest("GET", path, nil, &transactions)
 	if err != nil {
 		return nil, err
 	}
@@ -159,15 +160,47 @@ func (ac *AptosClient) GetAccountTransactions(address string, limit, start int) 
 	return transactions, err
 }
 
-func (ac *AptosClient) GetTransaction(hashOrVersion string) (*Transaction, error) {
+func (ac *AptosClient) Transaction(hashOrVersion string) (*Transaction, error) {
 
 	path := fmt.Sprint("/transactions/", hashOrVersion)
 
 	var transaction Transaction
-	err := ac.makeRequest("GET", path, &transaction)
+	err := ac.makeRequest("GET", path, nil, &transaction)
 	if err != nil {
 		return nil, err
 	}
 
 	return &transaction, nil
+}
+
+func (ac *AptosClient) CreateSigningMessage(unsignedTx *UnsignedTx) (*SigningMessage, error) {
+
+	unsignedJson, err := json.Marshal(unsignedTx)
+	if err != nil {
+		return nil, err
+	}
+
+	var signingMessage *SigningMessage
+	err = ac.makeRequest("POST", "/transactions/signing_message", unsignedJson, &signingMessage)
+	if err != nil {
+		return nil, err
+	}
+
+	return signingMessage, nil
+}
+
+func (ac *AptosClient) SubmitTransaction(signedTx *SignedTx) (*Transaction, error) {
+	signedJson, err := json.Marshal(signedTx)
+	if err != nil {
+		return nil, err
+	}
+
+	var transaction Transaction
+	err = ac.makeRequest("POST", "/transactions", signedJson, &transaction)
+	if err != nil {
+		return nil, err
+	}
+
+	return &transaction, nil
+
 }

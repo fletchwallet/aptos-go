@@ -9,4 +9,3 @@ func NewAptosClient(nodeURL string) *AptosClient {
 		nodeURL: nodeURL,
 	}
 }
-
