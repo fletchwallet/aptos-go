@@ -41,7 +41,17 @@ func (ac *AptosClient) makeRequest(method, path string, result interface{}) erro
 	return nil
 }
 
-func (ac *AptosClient) GetAccount(address string) (*Account, error) {
+func (ac *AptosClient) LedgerInfo() (*LedgerInfo, error) {
+	var info LedgerInfo
+	err := ac.makeRequest("GET", "/", &info)
+	if err != nil {
+		return nil, err
+	}
+
+	return &info, nil
+}
+
+func (ac *AptosClient) Account(address string) (*Account, error) {
 	var account Account
 	err := ac.makeRequest("GET", fmt.Sprint("/accounts/", address), &account)
 	if err != nil {
@@ -51,7 +61,7 @@ func (ac *AptosClient) GetAccount(address string) (*Account, error) {
 	return &account, nil
 }
 
-func (ac *AptosClient) GetAccountResources(address, version string) ([]AccountResource, error) {
+func (ac *AptosClient) AccountResources(address, version string) ([]AccountResource, error) {
 
 	path := fmt.Sprint("/accounts/", address, "/resources")
 	if version != "" {
@@ -67,7 +77,7 @@ func (ac *AptosClient) GetAccountResources(address, version string) ([]AccountRe
 	return accountResources, nil
 }
 
-func (ac *AptosClient) GetAccountResourceByType(address, resourceType, version string) (*AccountResource, error) {
+func (ac *AptosClient) AccountResourceByType(address, resourceType, version string) (*AccountResource, error) {
 	path := fmt.Sprint("/accounts/", address, "/resource/", resourceType)
 	if version != "" {
 		path += fmt.Sprint("?version=", version)
@@ -83,7 +93,7 @@ func (ac *AptosClient) GetAccountResourceByType(address, resourceType, version s
 }
 
 //TODO: test function
-func (ac *AptosClient) GetAccountModules(address, version string) ([]AccountModule, error) {
+func (ac *AptosClient) AccountModules(address, version string) ([]AccountModule, error) {
 
 	path := fmt.Sprint("/accounts/", address, "/modules")
 	if version != "" {
@@ -100,7 +110,7 @@ func (ac *AptosClient) GetAccountModules(address, version string) ([]AccountModu
 }
 
 //TODO: test function
-func (ac *AptosClient) GetAccountModuleByID(address, moduleID, version string) (*AccountModule, error) {
+func (ac *AptosClient) AccountModuleByID(address, moduleID, version string) (*AccountModule, error) {
 
 	path := fmt.Sprint("/accounts/", address, "/module/", moduleID)
 	if version != "" {

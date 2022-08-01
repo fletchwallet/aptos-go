@@ -1,5 +1,11 @@
 package aptos
 
+type LedgerInfo struct {
+	ChainID         int32  `json:"chain_id"`
+	LedgerVersion   uint   `json:"ledger_version,string"`
+	LedgerTimestamp uint64 `json:"ledger_timestamp,string"`
+}
+
 type Account struct {
 	SequenceNumber uint64 `json:"sequence_number,string"`
 	AuthKey        string `json:"authentication_key"`
