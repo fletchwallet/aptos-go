@@ -2,6 +2,7 @@ package aptos
 
 import (
 	"encoding/hex"
+	"fmt"
 	"time"
 )
 
@@ -75,4 +76,35 @@ func (ac *AptosClient) SignTransaction(account *AptosAccount, unsignedTx *Unsign
 		UnsignedTx: unsignedTx,
 		Signature:  sig,
 	}, nil
+}
+
+func (ac *AptosClient) TransactionPending(txnHash string) (bool, error) {
+	tx, err := ac.Transaction(txnHash)
+	if err != nil {
+		return false, err
+	}
+
+	return tx.Type == "pending_transaction", nil
+}
+
+func (ac *AptosClient) WaitForTransaction(txnHash string) error {
+	count := 0
+	for {
+		time.Sleep(1 * time.Second)
+		txPending, err := ac.TransactionPending(txnHash)
+		if err != nil {
+			return err
+		}
+
+		if !txPending {
+			break
+		}
+
+		count++
+		if count <= 10 {
+			return fmt.Errorf("waiting for transaction %s timed out", txnHash)
+		}
+	}
+
+	return nil
 }

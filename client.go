@@ -30,7 +30,7 @@ func (ac *AptosClient) makeRequest(method, path string, requestBodyJson []byte, 
 	}
 	res.Body.Close()
 
-	if res.StatusCode != 200 {
+	if res.StatusCode != 200 && res.StatusCode != 202 {
 		return errors.New(string(body))
 	}
 
